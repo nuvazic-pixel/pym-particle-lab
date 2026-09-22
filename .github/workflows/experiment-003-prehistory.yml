@@ -1,0 +1,26 @@
+name: Experiment 003 Prehistory
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prehistory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - name: Install project and test dependencies
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: python -m pytest -q
+      - name: Run Experiment 003 Prehistory
+        run: python -m pym.lab.prehistory_runner
+      - name: Upload Experiment 003 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003-prehistory-results
+          path: artifacts_prehistory/
