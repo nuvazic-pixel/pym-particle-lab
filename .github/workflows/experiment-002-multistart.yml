@@ -1,0 +1,26 @@
+name: Experiment 002 Multistart
+
+on:
+  workflow_dispatch:
+
+jobs:
+  multistart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - name: Install project and test dependencies
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: python -m pytest -q
+      - name: Run Experiment 002 Multistart
+        run: python -m pym.lab.multistart_runner
+      - name: Upload multistart artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-002-multistart-results
+          path: artifacts_multistart/
