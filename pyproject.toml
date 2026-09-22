@@ -1,0 +1,9 @@
+[project]
+name = "pym-particle-lab"
+version = "0.1.0"
+description = "Falsifiable computational sandbox for an explicit particle-memory hypothesis"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
