@@ -63,8 +63,8 @@ def classify(rows: list[EquivalenceRow], index: int) -> str:
 
 def run_equivalence_challenge(
     modes=(1, 2, 4, 8, 16, 32),
-    steps: int = 300,
-    dt: float = 0.002,
+    steps: int = 600,
+    dt: float = 0.001,
     maxiter: int = 150,
 ):
     train_ic = IC("IC_1", (1.0,), (0.15,), 2.0)
