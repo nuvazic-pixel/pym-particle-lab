@@ -1,0 +1,24 @@
+name: Experiment 003B Warm Boundary
+on:
+  workflow_dispatch:
+jobs:
+  warm-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - name: Install project and test dependencies
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: python -m pytest -q
+      - name: Run Experiment 003B
+        run: python -m pym.lab.warm_boundary
+      - name: Upload Experiment 003B artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003b-warm-boundary
+          path: artifacts_warm_boundary/
