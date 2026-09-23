@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import asdict, dataclass
+import argparse
 import json
 from pathlib import Path
 import numpy as np
@@ -16,6 +17,7 @@ COUPLING_BOUNDS=(1e-4,1e1)
 DT=0.001
 PREP_TIME=1.0
 EVAL_TIME=0.6
+PENALTY=1e12
 
 
 @dataclass(frozen=True)
@@ -51,10 +53,16 @@ def params_from_log(x,n):
 
 def loss_from_prepared(params,case,target_q,target_p,dt=DT):
     prep_steps=int(round(PREP_TIME/dt)); eval_steps=int(round(EVAL_TIME/dt))
-    b0=prepare_bath(params,case.q0,case.p0,dt,prep_steps,case.protocol)
-    q,p=release_bath(b0,params,eval_steps,dt)
-    dq=q-target_q; dp=p-target_p
-    return float(np.mean(np.sum(dq*dq,axis=1)+np.sum(dp*dp,axis=1)))
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        b0=prepare_bath(params,case.q0,case.p0,dt,prep_steps,case.protocol)
+        if b0 is None:
+            return PENALTY
+        q,p=release_bath(b0,params,eval_steps,dt)
+        if q is None or p is None:
+            return PENALTY
+        dq=q-target_q; dp=p-target_p
+        loss=float(np.mean(np.sum(dq*dq,axis=1)+np.sum(dp*dp,axis=1)))
+    return loss if np.isfinite(loss) else PENALTY
 
 
 def pym_target(case,dt=DT):
@@ -113,6 +121,12 @@ def export(fits,targets,out_dir="artifacts_prehistory"):
 
 
 if __name__=="__main__":
-    fits,targets=run()
-    out=export(fits,targets)
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--n",type=int,choices=MODES)
+    ap.add_argument("--k-starts",type=int,default=K_STARTS)
+    ap.add_argument("--maxiter",type=int,default=150)
+    args=ap.parse_args()
+    modes=(args.n,) if args.n else MODES
+    fits,targets=run(modes=modes,k_starts=args.k_starts,maxiter=args.maxiter)
+    out=export(fits,targets,out_dir=f"artifacts_prehistory/N{args.n}" if args.n else "artifacts_prehistory")
     print((out/"prehistory_003_summary.md").read_text())
