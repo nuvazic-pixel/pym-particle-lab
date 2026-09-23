@@ -125,8 +125,13 @@ if __name__=="__main__":
     ap.add_argument("--n",type=int,choices=MODES)
     ap.add_argument("--k-starts",type=int,default=K_STARTS)
     ap.add_argument("--maxiter",type=int,default=150)
+    ap.add_argument("--start-index",type=int,default=0)
     args=ap.parse_args()
     modes=(args.n,) if args.n else MODES
+    if args.start_index:
+        global BASE_SEED
+        BASE_SEED = BASE_SEED + args.start_index
     fits,targets=run(modes=modes,k_starts=args.k_starts,maxiter=args.maxiter)
-    out=export(fits,targets,out_dir=f"artifacts_prehistory/N{args.n}" if args.n else "artifacts_prehistory")
+    suffix=f"_start{args.start_index}" if args.start_index else ""
+    out=export(fits,targets,out_dir=f"artifacts_prehistory/N{args.n}{suffix}" if args.n else "artifacts_prehistory")
     print((out/"prehistory_003_summary.md").read_text())
