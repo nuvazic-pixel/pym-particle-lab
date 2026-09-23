@@ -91,12 +91,12 @@ def fit_one(n,seed,targets,maxiter=150):
                          params.omega.tolist(),params.coupling.tolist(),oos)
 
 
-def run(modes=MODES,k_starts=K_STARTS,maxiter=150):
+def run(modes=MODES,k_starts=K_STARTS,maxiter=150,base_seed=BASE_SEED):
     targets={c.name:pym_target(c) for c in CASES}
     fits=[]
     for n in modes:
         for k in range(k_starts):
-            fits.append(fit_one(n,BASE_SEED+k,targets,maxiter))
+            fits.append(fit_one(n,base_seed+k,targets,maxiter))
     return fits,targets
 
 
@@ -128,10 +128,8 @@ if __name__=="__main__":
     ap.add_argument("--start-index",type=int,default=0)
     args=ap.parse_args()
     modes=(args.n,) if args.n else MODES
-    if args.start_index:
-        global BASE_SEED
-        BASE_SEED = BASE_SEED + args.start_index
-    fits,targets=run(modes=modes,k_starts=args.k_starts,maxiter=args.maxiter)
+    base_seed=BASE_SEED + args.start_index
+    fits,targets=run(modes=modes,k_starts=args.k_starts,maxiter=args.maxiter,base_seed=base_seed)
     suffix=f"_start{args.start_index}" if args.start_index else ""
     out=export(fits,targets,out_dir=f"artifacts_prehistory/N{args.n}{suffix}" if args.n else "artifacts_prehistory")
     print((out/"prehistory_003_summary.md").read_text())
