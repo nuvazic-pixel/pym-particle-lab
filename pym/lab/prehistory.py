@@ -28,8 +28,8 @@ def prepare_pym(q0, p0, lambda_pym, dt, prep_steps, protocol):
     for k in range(prep_steps):
         t = (k - prep_steps) * dt
         u = protocol.force(t)
-        def forced_standard(position, momentum, u=u):
-            return harmonic_force(position, momentum) + np.full_like(position, u)
+        def forced_standard(s, u=u):
+            return harmonic_force(s) + np.full_like(s.position, u)
         state = engine.step(state, dt, forced_standard, memory_force)
     return state
 
