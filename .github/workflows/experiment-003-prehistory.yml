@@ -5,6 +5,10 @@ on:
 
 jobs:
   prehistory:
+    strategy:
+      fail-fast: false
+      matrix:
+        N: [1, 2, 4, 8, 16, 32]
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
@@ -17,10 +21,10 @@ jobs:
         run: pip install -e ".[test]"
       - name: Tests
         run: python -m pytest -q
-      - name: Run Experiment 003 Prehistory
-        run: python -m pym.lab.prehistory_runner
-      - name: Upload Experiment 003 artifacts
+      - name: Run Experiment 003 Prehistory N=${{ matrix.N }}
+        run: python -m pym.lab.prehistory_runner --n ${{ matrix.N }}
+      - name: Upload Experiment 003 N=${{ matrix.N }} artifact
         uses: actions/upload-artifact@v4
         with:
-          name: experiment-003-prehistory-results
-          path: artifacts_prehistory/
+          name: experiment-003-prehistory-N${{ matrix.N }}
+          path: artifacts_prehistory/N${{ matrix.N }}/
