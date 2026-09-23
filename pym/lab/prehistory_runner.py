@@ -130,6 +130,6 @@ if __name__=="__main__":
     modes=(args.n,) if args.n else MODES
     base_seed=BASE_SEED + args.start_index
     fits,targets=run(modes=modes,k_starts=args.k_starts,maxiter=args.maxiter,base_seed=base_seed)
-    suffix=f"_start{args.start_index}" if args.start_index else ""
+    suffix=f"_start{args.start_index}" if args.n == 32 else (f"_start{args.start_index}" if args.start_index else "")
     out=export(fits,targets,out_dir=f"artifacts_prehistory/N{args.n}{suffix}" if args.n else "artifacts_prehistory")
     print((out/"prehistory_003_summary.md").read_text())
