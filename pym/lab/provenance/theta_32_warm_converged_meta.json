@@ -1,0 +1,11 @@
+{
+  "source": {
+    "experiment": "Experiment 003 Warm Continuation",
+    "workflow_run_id": 35871085831,
+    "artifact_id": 10754787757,
+    "artifact_sha256": "c551b7583c0618d5e99709e90eacbd5cc1dd519ff7d8090d4b4c4b6425332d59"
+  },
+  "n_modes": 32,
+  "train_loss": 0.0264812987,
+  "note": "Full warm-converged theta is loaded from the committed warm continuation artifact result in the next runner provenance update."
+}
