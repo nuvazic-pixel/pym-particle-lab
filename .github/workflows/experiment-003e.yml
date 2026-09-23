@@ -1,0 +1,29 @@
+name: Experiment 003E Independent Multistart Boundary Check
+on:
+  workflow_dispatch:
+jobs:
+  multistart:
+    strategy:
+      fail-fast: false
+      matrix:
+        n: [5, 6]
+        start: [0, 10, 20, 30, 40]
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - name: Install project and test dependencies
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: python -m pytest -q
+      - name: Run independent multistart chunk
+        run: python -m pym.lab.multistart_boundary_check --n ${{ matrix.n }} --start-index ${{ matrix.start }} --k-starts 10
+      - name: Upload chunk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003e-N${{ matrix.n }}-start${{ matrix.start }}
+          path: artifacts_boundary_multistart/N${{ matrix.n }}_start${{ matrix.start }}/
