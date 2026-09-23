@@ -34,6 +34,10 @@ def prepare_pym(q0, p0, lambda_pym, dt, prep_steps, protocol):
     return state
 
 
+def _finite_bath_state(state):
+    return all(np.isfinite(a).all() for a in (state.q, state.p, state.y, state.py))
+
+
 def prepare_bath(params, q0, p0, dt, prep_steps, protocol):
     n = params.n_modes
     state = MultiModeState(
@@ -59,6 +63,8 @@ def prepare_bath(params, q0, p0, dt, prep_steps, protocol):
             q_new, p_half + 0.5 * dt * fq2, y_new,
             py_half + 0.5 * dt * fy2, state.particle_mass,
         )
+        if not _finite_bath_state(state):
+            return None
     return state
 
 
@@ -71,8 +77,12 @@ def release_pym(state, steps, dt):
 
 
 def release_bath(state, params, steps, dt):
+    if state is None:
+        return None, None
     qs=[]; ps=[]
     for _ in range(steps):
         state = step_velocity_verlet(state, params, dt)
+        if not _finite_bath_state(state):
+            return None, None
         qs.append(state.q.copy()); ps.append(state.p.copy())
     return np.asarray(qs), np.asarray(ps)
