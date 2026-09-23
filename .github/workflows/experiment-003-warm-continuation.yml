@@ -1,0 +1,26 @@
+name: Experiment 003 Warm Continuation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  warm-continuation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - name: Install project and test dependencies
+        run: pip install -e ".[test]"
+      - name: Tests
+        run: python -m pytest -q
+      - name: Warm continue N32 seed 43003
+        run: python -m pym.lab.warm_continuation
+      - name: Upload warm continuation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003-warm-continuation-43003
+          path: artifacts_warm_continuation/
