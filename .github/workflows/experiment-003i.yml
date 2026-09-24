@@ -1,0 +1,24 @@
+name: Experiment 003I Spectral Dissection
+on:
+  workflow_dispatch:
+jobs:
+  spectral-dissection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - name: Install project and test dependencies
+        run: pip install -e ".[test]" matplotlib
+      - name: Tests
+        run: python -m pytest -q
+      - name: Run Experiment 003I
+        run: python -m pym.lab.spectral_dissection
+      - name: Upload Experiment 003I artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003i-spectral-dissection
+          path: artifacts_spectral_dissection/
