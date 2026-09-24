@@ -8,7 +8,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.11"}
-      - run: pip install -e ".[test]"
+      - run: pip install -e ".[test]" matplotlib
       - run: python -m pytest -q
       - run: python -m pym.lab.horizon_scaling --phase calibrate
       - uses: actions/upload-artifact@v4
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.11"}
-      - run: pip install -e ".[test]"
+      - run: pip install -e ".[test]" matplotlib
       - run: python -m pym.lab.horizon_scaling --phase independent --T ${{ matrix.T }}
       - uses: actions/upload-artifact@v4
         with:
