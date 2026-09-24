@@ -1,0 +1,35 @@
+name: Experiment 003K-A Independent Horizon Capacity
+on:
+  workflow_dispatch:
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[test]"
+      - run: python -m pytest -q
+      - run: python -m pym.lab.horizon_scaling --phase calibrate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003k-calibration
+          path: artifacts_horizon_scaling/
+  independent:
+    needs: calibration
+    strategy:
+      fail-fast: false
+      matrix:
+        T: [0.3, 0.6, 1.0, 2.0, 3.0, 5.0]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[test]"
+      - run: python -m pym.lab.horizon_scaling --phase independent --T ${{ matrix.T }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003k-a-T${{ matrix.T }}
+          path: artifacts_horizon_scaling/
