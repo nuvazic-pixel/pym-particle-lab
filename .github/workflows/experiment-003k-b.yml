@@ -1,0 +1,26 @@
+name: Experiment 003K-B Sequential Continuation
+on:
+  workflow_dispatch:
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[test]"
+      - run: python -m pym.lab.horizon_scaling --phase calibrate
+  continuation:
+    needs: calibration
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[test]"
+      - run: python -m pym.lab.horizon_scaling --phase continuation
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003k-b-continuation
+          path: artifacts_horizon_scaling/
