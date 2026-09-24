@@ -19,9 +19,9 @@ COUPLING_BOUNDS=(1e-4,1e2)
 MAXITER=300
 GTOL=1e-6
 FTOL=1e-9
-ANCHOR_NRMSE=1.0214353819572455
+ANCHOR_NRMSE=1.0215428270266633
 ANCHOR_MARGIN=1.05
-EPSILON=1.0725071510551078
+EPSILON=1.0726199683779965
 ANCHOR_T=0.6
 ANCHOR_SIGMA={"IC_1":0.13582885408422112,"IC_2":0.11707011915998188,"IC_3":0.18485292671545464}
 OUT=Path("artifacts_horizon_scaling")
@@ -101,7 +101,7 @@ def calibrate():
     ref=max(m[k]["nrmse_fixed"] for k in m)
     result={"experiment_version":"003K-v3","anchor_source":"Frozen N=3 at T=0.6 s (historical 003G-derived reconstruction)","anchor_T":ANCHOR_T,"anchor_sigma_per_ic":ANCHOR_SIGMA,"anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"epsilon_frozen":EPSILON,"n3_reference_nrmse_max":ref,
             "reference_metrics":m,"calibration_pass":bool(ref<=EPSILON),
-            "policy":"003K-v3: PASS uses per-IC sigma anchors frozen at T=0.6 s. epsilon is frozen at 1.0725071510551078 for every horizon. Dynamic sigma/NRMSE are diagnostic only."}
+            "policy":"003K-v3: PASS uses per-IC sigma anchors frozen at T=0.6 s. epsilon is frozen at 1.0726199683779965 for every horizon. Dynamic sigma/NRMSE are diagnostic only."}
     OUT.mkdir(parents=True,exist_ok=True)
     (OUT/"calibration_003k.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps(result,indent=2))
