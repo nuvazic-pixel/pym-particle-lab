@@ -22,6 +22,8 @@ FTOL=1e-9
 ANCHOR_NRMSE=1.0214353819572455
 ANCHOR_MARGIN=1.05
 EPSILON=1.0725071510551078
+ANCHOR_T=0.6
+ANCHOR_SIGMA={"IC_1":0.13582885408422112,"IC_2":0.11707011915998188,"IC_3":0.18485292671545464}
 OUT=Path("artifacts_horizon_scaling")
 
 def targets_for(T):
@@ -51,12 +53,19 @@ def metrics(params,T,targets):
     ans={}
     for case in CASES:
         r=raw_loss(params,case,targets[case.name],T)
-        sig=sigma_target(targets[case.name])
-        ans[case.name]={"raw_loss":r,"nrmse":float(np.sqrt(r)/max(sig,1e-15)),"sigma_pym":sig}
+        sig_dynamic=sigma_target(targets[case.name])
+        sig_anchor=ANCHOR_SIGMA[case.name]
+        ans[case.name]={
+            "raw_loss":r,
+            "nrmse_fixed":float(np.sqrt(r)/sig_anchor),
+            "sigma_anchor":sig_anchor,
+            "nrmse_dynamic_diagnostic":float(np.sqrt(r)/max(sig_dynamic,1e-15)),
+            "sigma_pym_dynamic_diagnostic":sig_dynamic,
+        }
     return ans
 
 def is_pass(m,epsilon=EPSILON):
-    return all(m[c.name]["nrmse"]<=epsilon for c in CASES)
+    return all(m[c.name]["nrmse_fixed"]<=epsilon for c in CASES)
 
 def optimize_n(n,T,targets,x0,seed):
     ob=(np.log(OMEGA_BOUNDS[0]),np.log(OMEGA_BOUNDS[1]))
@@ -89,10 +98,10 @@ def calibrate():
         q,p=release_pym(s,steps,DT); historical[case.name]=(q,p,s)
     o,c,_,path=reconstruct_n3(historical)
     m=metrics(BathParameters(np.ones(3),o,c),T,targets)
-    ref=max(m[k]["nrmse"] for k in m)
-    result={"experiment_version":"003K-v2","anchor_source":"Frozen N=3 at T=0.6 s (historical 003G-derived reconstruction)","anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"epsilon_frozen":EPSILON,"n3_reference_nrmse_max":ref,
+    ref=max(m[k]["nrmse_fixed"] for k in m)
+    result={"experiment_version":"003K-v3","anchor_source":"Frozen N=3 at T=0.6 s (historical 003G-derived reconstruction)","anchor_T":ANCHOR_T,"anchor_sigma_per_ic":ANCHOR_SIGMA,"anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"epsilon_frozen":EPSILON,"n3_reference_nrmse_max":ref,
             "reference_metrics":m,"calibration_pass":bool(ref<=EPSILON),
-            "policy":"003K-v2: epsilon is frozen at 1.0725071510551078 = 1.05 * 1.0214353819572455 for every horizon; calibration verifies provenance and does not modify epsilon."}
+            "policy":"003K-v3: PASS uses per-IC sigma anchors frozen at T=0.6 s. epsilon is frozen at 1.0725071510551078 for every horizon. Dynamic sigma/NRMSE are diagnostic only."}
     OUT.mkdir(parents=True,exist_ok=True)
     (OUT/"calibration_003k.json").write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps(result,indent=2))
@@ -115,7 +124,7 @@ def independent(T):
             tier_pass=tier_pass or best["pass"]
         if tier_pass: break
     passing=[r["n"] for r in rows if r["best"]["pass"]]
-    result={"phase":"003K-A-v2","T":T,"epsilon":EPSILON,"anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"K":K,"results":rows,
+    result={"phase":"003K-A-v3","T":T,"epsilon":EPSILON,"anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"anchor_sigma_per_ic":ANCHOR_SIGMA,"K":K,"results":rows,
             "n_min_independent":min(passing) if passing else None}
     OUT.mkdir(parents=True,exist_ok=True)
     (OUT/f"independent_T{T:g}.json").write_text(json.dumps(result,indent=2)+"\n")
@@ -156,7 +165,7 @@ def continuation():
             if tier_pass: break
         passing=[r["n"] for r in rows if r["best"]["pass"]]
         chain.append({"T":T,"n_min_continuation":min(passing) if passing else None,"results":rows})
-    result={"phase":"003K-B-v2","epsilon":EPSILON,"anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"chain":chain,
+    result={"phase":"003K-B-v3","epsilon":EPSILON,"anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,"anchor_sigma_per_ic":ANCHOR_SIGMA,"chain":chain,
             "note":"Continuation candidates are never ranked by OOS; IC2/IC3 are audit-only."}
     OUT.mkdir(parents=True,exist_ok=True)
     (OUT/"continuation_003k.json").write_text(json.dumps(result,indent=2)+"\n")
