@@ -1,0 +1,40 @@
+name: Experiment 003K-v3.1 Resilient Cells
+on:
+  workflow_dispatch:
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[test]" matplotlib
+      - run: python -m pytest -q
+      - run: python -m pym.lab.horizon_scaling --phase calibrate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003k-v3-1-calibration
+          path: artifacts_horizon_scaling/
+
+  cells:
+    needs: calibration
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        T: [0.6, 1.0, 2.0, 3.0, 5.0]
+        N: [1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e ".[test]" matplotlib
+      - run: python -m pym.lab.horizon_scaling --phase cell --T ${{ matrix.T }} --N ${{ matrix.N }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experiment-003k-v3-1-T${{ matrix.T }}-N${{ matrix.N }}
+          path: artifacts_horizon_scaling/
+          if-no-files-found: warn
