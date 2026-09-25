@@ -36,13 +36,20 @@ def targets_for(T):
 
 def raw_loss(params,case,target,T):
     prep=int(round(PREP_TIME/DT)); steps=int(round(T/DT))
-    b=prepare_bath(params,case.q0,case.p0,DT,prep,case.protocol)
-    if b is None: return 1e12
-    q,p=release_bath(b,params,steps,DT)
-    if q is None: return 1e12
-    tq,tp=target
-    d=(q-tq)**2+(p-tp)**2
-    return float(np.mean(np.sum(d,axis=1)))
+    # Infrastructure guard only: invalid numerical trajectories receive the
+    # same finite sentinel and never participate in scientific PASS decisions.
+    try:
+        with np.errstate(over="raise", invalid="raise", divide="raise"):
+            b=prepare_bath(params,case.q0,case.p0,DT,prep,case.protocol)
+            if b is None: return 1e12
+            q,p=release_bath(b,params,steps,DT)
+            if q is None or not (np.all(np.isfinite(q)) and np.all(np.isfinite(p))): return 1e12
+            tq,tp=target
+            d=(q-tq)**2+(p-tp)**2
+            value=float(np.mean(np.sum(d,axis=1)))
+            return value if np.isfinite(value) else 1e12
+    except (FloatingPointError, OverflowError, ValueError):
+        return 1e12
 
 def sigma_target(target):
     q,p=target
@@ -110,7 +117,24 @@ def calibrate():
     if ref>EPSILON:
         raise SystemExit("CALIBRATION GATE FAILED: frozen anchor exceeds 003K-v2 epsilon")
 
+def independent_cell(T,n):
+    """One preregistered (T,N) cell. K/bounds/optimizer/metric are unchanged."""
+    targets=targets_for(T); starts=[]
+    for k in range(K):
+        seed=BASE_SEED+k
+        starts.append(optimize_n(n,T,targets,random_x0(n,seed),seed))
+    best=min(starts,key=lambda r:r["metrics"]["IC_1"]["raw_loss"])
+    result={"phase":"003K-A-v3.1-cell","T":T,"n":n,"epsilon":EPSILON,
+            "anchor_nrmse":ANCHOR_NRMSE,"anchor_margin":ANCHOR_MARGIN,
+            "anchor_sigma_per_ic":ANCHOR_SIGMA,"K":K,"best":best,"starts":starts}
+    OUT.mkdir(parents=True,exist_ok=True)
+    path=OUT/f"cell_T{T:g}_N{n}.json"
+    path.write_text(json.dumps(result,indent=2)+"\n")
+    print(json.dumps({"T":T,"n":n,"pass":best["pass"],
+                      "train_loss":best["metrics"]["IC_1"]["raw_loss"]},indent=2))
+
 def independent(T):
+    # Retained for reproducibility of v3; v3.1 workflow uses independent_cell.
     targets=targets_for(T); rows=[]
     for tier in TIERS:
         tier_pass=False
@@ -173,11 +197,17 @@ def continuation():
 
 if __name__=="__main__":
     ap=argparse.ArgumentParser()
-    ap.add_argument("--phase",choices=("calibrate","independent","continuation"),required=True)
+    ap.add_argument("--phase",choices=("calibrate","independent","cell","continuation"),required=True)
     ap.add_argument("--T",type=float)
+    ap.add_argument("--N",type=int)
     a=ap.parse_args()
     if a.phase=="calibrate": calibrate()
     elif a.phase=="independent":
         if a.T not in HORIZONS: raise SystemExit("--T must be one of preregistered horizons")
         independent(a.T)
+    elif a.phase=="cell":
+        if a.T not in HORIZONS: raise SystemExit("--T must be one of preregistered horizons")
+        allowed={n for tier in TIERS for n in tier}
+        if a.N not in allowed: raise SystemExit("--N must be a preregistered capacity")
+        independent_cell(a.T,a.N)
     else: continuation()
