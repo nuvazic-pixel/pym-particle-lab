@@ -1,0 +1,50 @@
+name: Experiment 003K-v3.1 Recovery
+
+on:
+  workflow_dispatch:
+
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e ".[test]" matplotlib
+      - name: Tests
+        run: python -m pytest -q
+      - name: Deterministic calibration gate
+        run: python -m pym.lab.horizon_scaling --phase calibrate
+      - name: Upload calibration artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003k-v3-1-recovery-calibration
+          path: artifacts_horizon_scaling/calibration_003k.json
+
+  recovery:
+    needs: calibration
+    runs-on: ubuntu-latest
+    timeout-minutes: 720
+    strategy:
+      fail-fast: false
+      matrix:
+        N: [16, 24, 32]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e ".[test]" matplotlib
+      - name: Recover T=5.0 N=${{ matrix.N }}
+        run: python -m pym.lab.horizon_scaling --phase cell --T 5.0 --N ${{ matrix.N }}
+      - name: Upload cell artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003k-v3-1-recovery-T5-N${{ matrix.N }}
+          path: artifacts_horizon_scaling/cell_T5.0_N${{ matrix.N }}.json
+          if-no-files-found: warn
