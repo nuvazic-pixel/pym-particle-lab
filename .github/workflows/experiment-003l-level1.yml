@@ -1,0 +1,84 @@
+name: Experiment 003L Level-1 Matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/003l-model-class-ladder
+    paths:
+      - .github/workflows/experiment-003l-level1.yml
+
+jobs:
+  protocol-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[test]"
+      - run: pytest -q tests/test_damped_multimode_bath.py tests/test_experiment_003l_level1.py
+
+  cell:
+    needs: protocol-gate
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        T: ["0.3", "0.6", "1.0", "2.0", "3.0", "5.0"]
+        N: [1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[test]"
+
+      - name: Run Level-1 cell
+        id: run_cell
+        continue-on-error: true
+        run: python -m pym.lab.experiment_003l_level1 --T "${{ matrix.T }}" --N "${{ matrix.N }}"
+
+      - name: Resolve canonical artifact path
+        if: always()
+        id: artifact
+        shell: bash
+        run: |
+          TOKEN=$(python - <<'PY'
+          from pym.lab.experiment_003l_level1 import horizon_token
+          print(horizon_token(float("${{ matrix.T }}")))
+          PY
+          )
+          printf -v N2 "%02d" "${{ matrix.N }}"
+          PATH_JSON="artifacts_003l_level1/cell_${TOKEN}_N${N2}.json"
+          echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
+          echo "path=${PATH_JSON}" >> "$GITHUB_OUTPUT"
+          if [ -s "${PATH_JSON}" ]; then
+            echo "payload=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "payload=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload cell payload
+        if: always() && steps.artifact.outputs.payload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 003l-l1-${{ steps.artifact.outputs.token }}-N${{ matrix.N }}
+          path: ${{ steps.artifact.outputs.path }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Mark incomplete cell
+        if: always() && steps.artifact.outputs.payload != 'true'
+        run: |
+          echo "::error::Cell T=${{ matrix.T }}, N=${{ matrix.N }} produced no complete JSON payload."
+          exit 1
+
+      - name: Propagate scientific execution failure
+        if: always() && steps.run_cell.outcome != 'success'
+        run: |
+          echo "::error::Cell execution failed or timed out before a complete successful run."
+          exit 1
