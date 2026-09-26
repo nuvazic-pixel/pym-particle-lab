@@ -1,0 +1,43 @@
+name: PYM-Core v0.3 Isolation Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/pym-core-v0.3
+    paths:
+      - "pym/core/v03.py"
+      - "pym/lab/core_v03_isolation_controls.py"
+      - "tests/test_core_v03*.py"
+      - ".github/workflows/experiment-v03-isolation.yml"
+
+jobs:
+  isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: python -m pip install -e ".[test]"
+
+      - name: Test frozen v0.3 gates
+        run: python -m pytest -q
+
+      - name: Execute frozen isolation harness
+        run: python -m pym.lab.core_v03_isolation_controls
+
+      - name: Verify raw result exists
+        run: test -s artifacts_core_v03/isolation_controls.json
+
+      - name: Upload isolation result
+        uses: actions/upload-artifact@v4
+        with:
+          name: pym-core-v03-isolation
+          path: artifacts_core_v03/isolation_controls.json
+          if-no-files-found: error
+          retention-days: 90
