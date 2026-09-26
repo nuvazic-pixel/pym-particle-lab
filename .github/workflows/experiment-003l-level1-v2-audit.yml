@@ -1,0 +1,24 @@
+name: Experiment 003L Level-1 v2 Audit Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/003l-model-class-ladder]
+    paths:
+      - "pym/physics/damped_multimode_bath.py"
+      - "pym/lab/experiment_003l_level1.py"
+      - "tests/test_damped_multimode_bath.py"
+      - "tests/test_experiment_003l_level1.py"
+      - ".github/workflows/experiment-003l-level1-v2-audit.yml"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[test]"
+      - name: Run Level-1 v2 audit gates
+        run: pytest -q tests/test_damped_multimode_bath.py tests/test_experiment_003l_level1.py
