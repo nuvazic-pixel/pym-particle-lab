@@ -3,6 +3,7 @@ import pytest
 
 from pym.physics.damped_multimode_bath import (
     DampedBathParameters,
+    _damping_step,
     instantaneous_dissipation_power,
     step_damped_bath,
     step_with_reservoir_accounting,
@@ -66,3 +67,22 @@ def test_reservoir_accounting_accumulates_nonnegative_energy():
     assert reservoir >= 0.0
     assert np.isfinite(e1)
     assert np.isfinite(e1 + reservoir - e0)
+
+
+def test_damping_step_matches_preregistered_exact_solution():
+    py = np.array([[0.4], [-0.2]])
+    gamma = np.array([0.3, 0.7])
+    h = 0.017
+    got = _damping_step(py, gamma, h)
+    expected = py * np.exp(-2.0 * gamma[:, None] * h)
+    assert np.array_equal(got, expected)
+
+
+def test_two_half_damping_steps_equal_full_exact_propagation():
+    py = np.array([[0.4], [-0.2]])
+    gamma = np.array([0.3, 0.7])
+    dt = 0.01
+    half = _damping_step(py, gamma, 0.5 * dt)
+    got = _damping_step(half, gamma, 0.5 * dt)
+    expected = py * np.exp(-2.0 * gamma[:, None] * dt)
+    assert np.allclose(got, expected, rtol=1e-15, atol=0.0)
