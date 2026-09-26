@@ -1,0 +1,40 @@
+name: Experiment 003L Level-0 Calibration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/003l-model-class-ladder
+    paths:
+      - ".github/workflows/experiment-003l-level0-calibration.yml"
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: python -m pip install -e ".[test]"
+
+      - name: Test suite
+        run: python -m pytest -q
+
+      - name: Execute preregistered Level-0 calibration
+        run: python -m pym.lab.experiment_003l_level0 --phase calibrate
+
+      - name: Verify calibration artifact
+        run: test -s artifacts_003l_level0_calibration/level0_calibration.json
+
+      - name: Upload Level-0 calibration
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-003l-level0-calibration
+          path: artifacts_003l_level0_calibration/level0_calibration.json
+          if-no-files-found: error
+          retention-days: 90
