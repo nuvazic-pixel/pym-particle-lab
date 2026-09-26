@@ -49,9 +49,17 @@ class DampedBathParameters:
         return BathParameters(self.mass.copy(), self.omega.copy(), self.coupling.copy())
 
 
+def _damping_step(py: np.ndarray, gamma: np.ndarray, h: float) -> np.ndarray:
+    """Exact damping propagation over interval h for p_y_dot = -2 gamma p_y."""
+    return py * np.exp(-2.0 * gamma[:, None] * h)
+
+
 def _damping_half_step(py: np.ndarray, gamma: np.ndarray, dt: float) -> np.ndarray:
-    """Exact half-step for p_y_dot = -2 gamma p_y."""
-    return py * np.exp(-gamma[:, None] * dt)
+    """Backward-compatible helper: propagate damping over the supplied interval.
+
+    Callers pass h = dt/2 for each Strang half-step.
+    """
+    return _damping_step(py, gamma, dt)
 
 
 def step_damped_bath(
