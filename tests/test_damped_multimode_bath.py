@@ -99,13 +99,13 @@ def test_damping_substep_matches_analytic_decay():
 
 
 def test_gamma_zero_prehistory_is_bit_identical_to_level0():
-    from pym.lab.experiment_003l_level0 import CASES, prepare_bath
+    from pym.lab.experiment_003l_level0 import CASES, DT, PREP_TIME\n    from pym.lab.prehistory import prepare_bath
     from pym.lab.experiment_003l_level1 import prepare_level1
 
     p0 = _level0()
     p1 = DampedBathParameters(p0.mass, p0.omega, p0.coupling, np.zeros(2))
     _, q0, mom0, protocol = CASES[0]
-    a = prepare_bath(p0, q0, mom0, protocol)
+    a = prepare_bath(p0, q0, mom0, DT, int(round(PREP_TIME / DT)), protocol)
     b = prepare_level1(p1, q0, mom0, protocol)
     assert np.array_equal(a.q, b.q)
     assert np.array_equal(a.p, b.p)
