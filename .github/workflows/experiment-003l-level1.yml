@@ -2,6 +2,11 @@ name: Experiment 003L Level-1 v2 Matrix
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/003l-model-class-ladder
+    paths:
+      - .github/workflows/experiment-003l-level1.yml
 
 jobs:
   protocol-gate:
