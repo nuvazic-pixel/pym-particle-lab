@@ -7,6 +7,11 @@ on:
       - feature/003l-model-class-ladder
     paths:
       - .github/workflows/experiment-003l-level1.yml
+  push:
+    branches:
+      - feature/003l-model-class-ladder
+    paths:
+      - .github/workflows/experiment-003l-level1.yml
 
 jobs:
   protocol-gate:
