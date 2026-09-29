@@ -24,7 +24,7 @@ SIGMA_V03 = {
 }
 A0 = 0.004734304658737562
 EPSILON_003L = 0.00497101989167444
-OUT = Path("artifacts_003l_level1")
+OUT = Path("artifacts_003l_level1_v2")
 
 
 def horizon_token(T: float) -> str:
@@ -210,7 +210,7 @@ def run_cell(T: float, n: int):
     # Frozen selection: TRAIN raw loss only.
     best = min(starts, key=lambda r: r["metrics"]["IC_1"]["raw_loss"])
     result = {
-        "experiment": "003L-Level1-per-cell-v1",
+        "experiment": "003L-Level1-per-cell-v2",
         "T": T,
         "horizon_token": horizon_token(T),
         "N": n,
