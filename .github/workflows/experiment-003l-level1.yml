@@ -1,12 +1,7 @@
-name: Experiment 003L Level-1 Matrix
+name: Experiment 003L Level-1 v2 Matrix
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/003l-model-class-ladder
-    paths:
-      - .github/workflows/experiment-003l-level1.yml
 
 jobs:
   protocol-gate:
@@ -14,6 +9,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 54aff04704fa5e8ca141be443386df909ce7d75b
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -32,6 +29,8 @@ jobs:
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 54aff04704fa5e8ca141be443386df909ce7d75b
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -53,7 +52,7 @@ jobs:
           PY
           )
           printf -v N2 "%02d" "${{ matrix.N }}"
-          PATH_JSON="artifacts_003l_level1/cell_${TOKEN}_N${N2}.json"
+          PATH_JSON="artifacts_003l_level1_v2/cell_${TOKEN}_N${N2}.json"
           echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
           echo "path=${PATH_JSON}" >> "$GITHUB_OUTPUT"
           if [ -s "${PATH_JSON}" ]; then
@@ -66,7 +65,7 @@ jobs:
         if: always() && steps.artifact.outputs.payload == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: 003l-l1-${{ steps.artifact.outputs.token }}-N${{ matrix.N }}
+          name: 003l-l1-v2-${{ steps.artifact.outputs.token }}-N${{ matrix.N }}
           path: ${{ steps.artifact.outputs.path }}
           if-no-files-found: error
           retention-days: 90
