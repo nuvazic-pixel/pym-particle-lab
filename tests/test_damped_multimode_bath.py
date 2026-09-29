@@ -99,7 +99,8 @@ def test_damping_substep_matches_analytic_decay():
 
 
 def test_gamma_zero_prehistory_is_bit_identical_to_level0():
-    from pym.lab.experiment_003l_level0 import CASES, DT, PREP_TIME\n    from pym.lab.prehistory import prepare_bath
+    from pym.lab.experiment_003l_level0 import CASES, DT, PREP_TIME
+    from pym.lab.prehistory import prepare_bath
     from pym.lab.experiment_003l_level1 import prepare_level1
 
     p0 = _level0()
